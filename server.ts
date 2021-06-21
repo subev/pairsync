@@ -3,6 +3,12 @@ import { Server, Socket } from "socket.io";
 import * as fs from "fs";
 import { of, fromEvent, Observable } from "rxjs";
 import { map, switchMap, takeUntil, tap } from "rxjs/operators";
+import * as shell from "shelljs";
+
+if (!shell.which("git")) {
+  shell.echo("Sorry, this script requires git");
+  shell.exit(1);
+}
 
 const httpServer = createServer();
 const io$ = of(
@@ -33,7 +39,9 @@ const localfilechangewatch$ = new Observable((subscriber) => {
   const watcher = fs.watch(".", function (event, filename) {
     console.log({ event, filename });
     if (event === "change" && filename) {
-      subscriber.next(filename);
+      const diff = shell.exec(`git diff ${filename}`);
+
+      subscriber.next({ filename, diff });
     }
   });
   return () => {
@@ -44,7 +52,7 @@ const localfilechangewatch$ = new Observable((subscriber) => {
 const onConnectAndThenFileChange = connection$.pipe(
   switchMap((socket) =>
     localfilechangewatch$.pipe(
-      map((localfile) => ({ socket, localfile })),
+      map(({ filename, diff }) => ({ socket, filename, diff })),
       takeUntil(
         fromEvent(socket, "disconnect").pipe(
           tap(() => console.log("disconnect"))
@@ -54,8 +62,8 @@ const onConnectAndThenFileChange = connection$.pipe(
   )
 );
 
-onConnectAndThenFileChange.subscribe(({ socket, localfile }) => {
-  socket.emit("pair-filechange", localfile);
+onConnectAndThenFileChange.subscribe(({ socket, filename, diff }) => {
+  socket.emit("pair-filechange", filename, diff);
 });
 
 console.log("server listening on port 3000");

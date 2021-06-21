@@ -1,6 +1,12 @@
 import { io } from "socket.io-client";
 import { of, fromEvent, Observable } from "rxjs";
 import { map, switchMap, takeUntil, tap } from "rxjs/operators";
+import * as shell from "shelljs";
+
+if (!shell.which("git")) {
+  shell.echo("Sorry, this script requires git");
+  shell.exit(1);
+}
 
 const socket$ = of(io("http://localhost:3000/"));
 
@@ -17,4 +23,6 @@ const filechangereceived$ = connection$.pipe(
   switchMap((socket) => fromEvent(socket, "pair-filechange"))
 );
 
-filechangereceived$.subscribe((filechange) => console.log({ filechange }));
+filechangereceived$.subscribe(([filename, diff]) =>
+  console.log({ filename, diff })
+);
