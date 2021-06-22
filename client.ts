@@ -23,6 +23,7 @@ const filechangereceived$ = connection$.pipe(
   switchMap((socket) => fromEvent(socket, "pair-filechange"))
 );
 
-filechangereceived$.subscribe(([filename, diff]) =>
-  console.log({ filename, diff })
-);
+filechangereceived$.subscribe(([filename, diff]) => {
+  console.log({ filename, diff });
+  shell.ShellString(diff).exec("git apply");
+});
