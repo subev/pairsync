@@ -3,6 +3,10 @@ import * as fs from "fs";
 import { Observable } from "rxjs";
 import * as shell from "shelljs";
 
+export type PairChangePayload = [filename: string, diff: string];
+
+export const PAIR_FILE_CHANGE_EVENT = "pair-filechange";
+
 export const localFileChange$ = new Observable<{
   filename: string;
   diff: shell.ShellString;
@@ -31,5 +35,3 @@ export const localFileChange$ = new Observable<{
     watcher.close();
   };
 });
-
-export const PAIR_FILE_CHANGE_EVENT = "pair-filechange";

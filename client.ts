@@ -45,8 +45,8 @@ let lastChangeSent: string;
 onConnectAndThenLocalFileChange$.subscribe(
   ({ socket, filename, diff: d, stat }) => {
     const diff = d.toString();
-    console.log("localchange", { diff, lastChangeReceived });
     if (lastChangeReceived !== diff && lastChangeSent !== diff) {
+      console.log("emitting change", filename);
       socket.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
       lastChangeSent = diff;
     }
