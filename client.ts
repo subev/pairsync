@@ -2,7 +2,7 @@ import { io } from "socket.io-client";
 import { of, fromEvent } from "rxjs";
 import { map, switchMap, takeUntil, tap } from "rxjs/operators";
 import * as shell from "shelljs";
-import { localFileChange$, PAIR_FILE_CHANGE_EVENT } from "./common";
+import { localFileChange$, PairChangePayload, PAIR_FILE_CHANGE_EVENT } from "./common";
 
 if (!shell.which("git")) {
   shell.echo("Sorry, this script requires git");
@@ -21,7 +21,7 @@ const connection$ = socket$.pipe(
 );
 
 const fileChangeReceived$ = connection$.pipe(
-  switchMap((socket) => fromEvent(socket, PAIR_FILE_CHANGE_EVENT))
+  switchMap((socket) => fromEvent<PairChangePayload>(socket, PAIR_FILE_CHANGE_EVENT))
 );
 
 const onConnectAndThenLocalFileChange$ = connection$.pipe(

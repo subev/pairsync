@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
 import { of, fromEvent } from "rxjs";
-import { map, switchMap, takeUntil, tap } from "rxjs/operators";
+import { map, mergeMap, switchMap, tap } from "rxjs/operators";
 import * as shell from "shelljs";
 import {
   localFileChange$,
@@ -22,51 +22,45 @@ const io$ = of(
 );
 
 const connection$ = io$.pipe(
-  switchMap((socket) =>
-    fromEvent(socket, "connection").pipe(
-      tap(({ id }) => console.log("client connected.", id)),
+  switchMap((server) =>
+    fromEvent(server, "connection").pipe<
+      Socket,
+      { socket: Socket; server: typeof server }
+    >(
+      tap<Socket>(({ id }) => console.log("client connected.", id)),
       // cant find a better way to infer the Socket type for this stream result
-      map((s: Socket) => s)
+      map((socket: Socket) => ({ socket, server }))
     )
   )
 );
 
 const fileChangeReceived$ = connection$.pipe(
-  switchMap((socket) =>
+  mergeMap(({ socket }) =>
     fromEvent(socket, PAIR_FILE_CHANGE_EVENT).pipe(
-      map(([filename, diff]: PairChangePayload) => [socket, filename, diff] as const)
-    )
-  )
-);
-
-const onConnectAndThenLocalFileChange = connection$.pipe(
-  switchMap((socket) =>
-    localFileChange$.pipe(
-      map((x) => ({ socket, ...x })),
-      takeUntil(
-        fromEvent(socket, "disconnect").pipe(
-          tap(() => console.log("disconnect"))
-        )
+      map(
+        ([filename, diff]: PairChangePayload) =>
+          [socket, filename, diff] as const
       )
     )
   )
 );
 
+const onConnectAndThenLocalFileChange = io$.pipe(
+  switchMap((server) => localFileChange$.pipe(map((x) => ({ server, ...x }))))
+);
+
 // consumes
 
 let lastChangeReceived = new Map<string, string>();
-let lastChangeSent = new Map<string, string>();
+let lastChangeSent: string;
 
 onConnectAndThenLocalFileChange.subscribe(
-  ({ socket, filename, diff: d, stat }) => {
+  ({ filename, diff: d, server }) => {
     const diff = d.toString();
-    if (
-      diff !== lastChangeReceived.get(socket.id) &&
-      diff !== lastChangeSent.get(socket.id)
-    ) {
+    if (diff !== lastChangeSent) {
       console.log("emitting change", filename);
-      socket.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
-      lastChangeSent.set(socket.id, diff);
+      server.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
+      lastChangeSent = diff;
     }
   }
 );
@@ -74,6 +68,7 @@ onConnectAndThenLocalFileChange.subscribe(
 fileChangeReceived$.subscribe(([socket, filename, diff]) => {
   console.log("received change", filename);
   lastChangeReceived.set(socket.id, diff);
+  socket.broadcast.emit(PAIR_FILE_CHANGE_EVENT, diff);
   shell.exec(`git checkout ${filename}`, { silent: true });
   shell.ShellString(diff).exec("git apply");
 });

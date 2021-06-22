@@ -10,7 +10,6 @@ export const PAIR_FILE_CHANGE_EVENT = "pair-filechange";
 export const localFileChange$ = new Observable<{
   filename: string;
   diff: shell.ShellString;
-  stat: shell.ShellString;
 }>((subscriber) => {
   const ignored = [
     ".git",
@@ -26,9 +25,8 @@ export const localFileChange$ = new Observable<{
   const watcher = chokidar.watch(".", { ignored }).on("change", (filename) => {
     if (filename) {
       const diff = shell.exec(`git diff ${filename}`, { silent: true });
-      const stat = shell.exec(`git diff --stat ${filename}`, { silent: true });
 
-      subscriber.next({ filename, diff, stat });
+      subscriber.next({ filename, diff });
     }
   });
   return () => {
