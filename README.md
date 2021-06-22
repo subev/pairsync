@@ -8,7 +8,7 @@ TODO
 - [] Untracked files are not handled
 - [] NPX support
 - [] validate that every client is starting from the same hash, otherwise drop connection
-- awesome
-- more awesome
-- fuck
-- even more
+    -awesome
+    -lksdjf
+
+
