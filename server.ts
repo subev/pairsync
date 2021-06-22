@@ -3,7 +3,7 @@ import { Server, Socket } from "socket.io";
 import { of, fromEvent } from "rxjs";
 import { map, switchMap, takeUntil, tap } from "rxjs/operators";
 import * as shell from "shelljs";
-import { localFileChange$ } from "./common";
+import { localFileChange$, PAIR_FILE_CHANGE_EVENT } from "./common";
 
 if (!shell.which("git")) {
   shell.echo("Sorry, this script requires git");
@@ -28,12 +28,7 @@ const connection$ = io$.pipe(
 );
 
 const fileChangeReceived$ = connection$.pipe(
-  switchMap((socket) =>
-    fromEvent(socket, "pairchange")
-      .pipe
-      // tap((pairchange) => console.log({ socketid: socket.id, pairchange }))
-      ()
-  )
+  switchMap((socket) => fromEvent(socket, PAIR_FILE_CHANGE_EVENT))
 );
 
 const onConnectAndThenLocalFileChange = connection$.pipe(
@@ -53,13 +48,13 @@ const onConnectAndThenLocalFileChange = connection$.pipe(
 
 onConnectAndThenLocalFileChange.subscribe(
   ({ socket, filename, diff, stat }) => {
-    console.log("localChange", stat.stdout);
-    socket.emit("pair-filechange", filename, diff);
+    console.log("localChange emit", stat.stdout);
+    socket.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
   }
 );
 
 fileChangeReceived$.subscribe(([filename, diff]) => {
-  console.log({ filename, diff });
+  console.log("received change", filename, diff);
   shell.exec(`git checkout ${filename}`);
   shell.ShellString(diff).exec("git apply");
 });

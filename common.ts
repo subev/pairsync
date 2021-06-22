@@ -8,7 +8,6 @@ export const localFileChange$ = new Observable<{
   stat: shell.ShellString;
 }>((subscriber) => {
   const watcher = fs.watch(".", function (event, filename) {
-    console.log({ event, filename });
     if (event === "change" && filename) {
       const diff = shell.exec(`git diff ${filename}`);
       const stat = shell.exec(`git diff --stat ${filename}`);
@@ -21,3 +20,5 @@ export const localFileChange$ = new Observable<{
   };
 });
 
+
+export const PAIR_FILE_CHANGE_EVENT = "pair-filechange";
