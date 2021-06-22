@@ -1,5 +1,5 @@
 import { io } from "socket.io-client";
-import { of, fromEvent, Observable } from "rxjs";
+import { of, fromEvent } from "rxjs";
 import { map, switchMap, takeUntil, tap } from "rxjs/operators";
 import * as shell from "shelljs";
 import { localFileChange$ } from "./common";
@@ -24,7 +24,7 @@ const fileChangeReceived$ = connection$.pipe(
   switchMap((socket) => fromEvent(socket, "pair-filechange"))
 );
 
-const onConnectAndThenLocalFileChange = connection$.pipe(
+const onConnectAndThenLocalFileChange$ = connection$.pipe(
   switchMap((socket) =>
     localFileChange$.pipe(
       map((x) => ({ socket, ...x })),
@@ -45,9 +45,9 @@ fileChangeReceived$.subscribe(([filename, diff]) => {
   shell.ShellString(diff).exec("git apply");
 });
 
-onConnectAndThenLocalFileChange.subscribe(
+onConnectAndThenLocalFileChange$.subscribe(
   ({ socket, filename, diff, stat }) => {
-    console.log({ localChange: stat });
+    console.log('localchange', stat.stdout);
     socket.emit("pair-filechange", filename, diff);
   }
 );

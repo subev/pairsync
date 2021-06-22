@@ -53,7 +53,7 @@ const onConnectAndThenLocalFileChange = connection$.pipe(
 
 onConnectAndThenLocalFileChange.subscribe(
   ({ socket, filename, diff, stat }) => {
-    console.log({ localChange: stat });
+    console.log("localChange", stat.stdout);
     socket.emit("pair-filechange", filename, diff);
   }
 );
