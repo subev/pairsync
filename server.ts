@@ -1,9 +1,9 @@
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import * as fs from "fs";
-import { of, fromEvent, Observable } from "rxjs";
-import { filter, map, switchMap, takeUntil, tap } from "rxjs/operators";
+import { of, fromEvent } from "rxjs";
+import { map, switchMap, takeUntil, tap } from "rxjs/operators";
 import * as shell from "shelljs";
+import { localFileChange$ } from "./common";
 
 if (!shell.which("git")) {
   shell.echo("Sorry, this script requires git");
@@ -27,7 +27,7 @@ const connection$ = io$.pipe(
   )
 );
 
-const filechangereceived$ = connection$.pipe(
+const fileChangeReceived$ = connection$.pipe(
   switchMap((socket) =>
     fromEvent(socket, "pairchange").pipe(
       // tap((pairchange) => console.log({ socketid: socket.id, pairchange }))
@@ -35,28 +35,9 @@ const filechangereceived$ = connection$.pipe(
   )
 );
 
-const localfilechangewatch$ = new Observable<{
-  filename: string;
-  diff: shell.ShellString;
-  stat: shell.ShellString;
-}>((subscriber) => {
-  const watcher = fs.watch(".", function (event, filename) {
-    console.log({ event, filename });
-    if (event === "change" && filename) {
-      const diff = shell.exec(`git diff ${filename}`);
-      const stat = shell.exec(`git diff --stat ${filename}`);
-
-      subscriber.next({ filename, diff, stat });
-    }
-  });
-  return () => {
-    watcher.close();
-  };
-});
-
 const onConnectAndThenFileChange = connection$.pipe(
   switchMap((socket) =>
-    localfilechangewatch$.pipe(
+    localFileChange$.pipe(
       map((x) => ({ socket, ...x })),
       takeUntil(
         fromEvent(socket, "disconnect").pipe(
@@ -67,9 +48,19 @@ const onConnectAndThenFileChange = connection$.pipe(
   )
 );
 
+// consumes
+
 onConnectAndThenFileChange.subscribe(({ socket, filename, diff }) => {
   socket.emit("pair-filechange", filename, diff);
 });
+
+fileChangeReceived$.subscribe(([filename, diff]) => {
+  console.log({ filename, diff });
+  shell.exec(`git checkout ${filename}`)
+  shell.ShellString(diff).exec("git apply");
+});
+
+// start server
 
 console.log("server listening on port 3000");
 httpServer.listen(3000);
