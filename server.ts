@@ -46,17 +46,28 @@ const onConnectAndThenLocalFileChange = connection$.pipe(
 
 // consumes
 
+let lastChangeReceived: string;
+let lastChangeSent: string;
+
 onConnectAndThenLocalFileChange.subscribe(
-  ({ socket, filename, diff, stat }) => {
-    console.log("localChange emit", stat.stdout);
-    socket.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
+  ({ socket, filename, diff: d, stat }) => {
+    const diff = d.toString();
+    console.log("localChange emit", {
+      diff: diff,
+      lastchangeReceived: lastChangeReceived,
+    });
+    if (diff !== lastChangeReceived && diff !== lastChangeSent) {
+      socket.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
+      lastChangeSent = diff;
+    }
   }
 );
 
 fileChangeReceived$.subscribe(([filename, diff]) => {
-  console.log("received change", filename, diff);
-  shell.exec(`git checkout ${filename}`);
-  shell.ShellString(diff).exec("git apply");
+  console.log("received change", filename);
+  lastChangeReceived = diff;
+  shell.exec(`git checkout ${filename}`, { silent: true });
+  shell.ShellString(diff).exec("git apply", { silent: true });
 });
 
 // start server

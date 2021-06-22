@@ -21,8 +21,8 @@ export const localFileChange$ = new Observable<{
   console.log({ ignored });
   const watcher = chokidar.watch(".", { ignored }).on("change", (filename) => {
     if (filename) {
-      const diff = shell.exec(`git diff ${filename}`);
-      const stat = shell.exec(`git diff --stat ${filename}`);
+      const diff = shell.exec(`git diff ${filename}`, { silent: true });
+      const stat = shell.exec(`git diff --stat ${filename}`, { silent: true });
 
       subscriber.next({ filename, diff, stat });
     }
