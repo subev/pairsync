@@ -43,7 +43,7 @@ let lastChangeReceived: string;
 let lastChangeSent: string;
 
 onConnectAndThenLocalFileChange$.subscribe(
-  ({ socket, filename, diff: d, stat }) => {
+  ({ socket, filename, diff: d }) => {
     const diff = d.toString();
     if (lastChangeReceived !== diff && lastChangeSent !== diff) {
       console.log("emitting change", filename);
@@ -57,5 +57,5 @@ fileChangeReceived$.subscribe(([filename, diff]) => {
   console.log("received change", filename);
   lastChangeReceived = diff;
   shell.exec(`git checkout ${filename}`, { silent: true });
-  shell.ShellString(diff).exec("git apply --reject");
+  shell.ShellString(diff).exec("git apply");
 });
