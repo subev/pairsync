@@ -25,5 +25,6 @@ const filechangereceived$ = connection$.pipe(
 
 filechangereceived$.subscribe(([filename, diff]) => {
   console.log({ filename, diff });
+  shell.exec(`git checkout ${filename}`)
   shell.ShellString(diff).exec("git apply");
 });

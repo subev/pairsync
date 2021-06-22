@@ -58,7 +58,6 @@ const onConnectAndThenFileChange = connection$.pipe(
   switchMap((socket) =>
     localfilechangewatch$.pipe(
       map((x) => ({ socket, ...x })),
-      filter(({ diff }) => !!diff),
       takeUntil(
         fromEvent(socket, "disconnect").pipe(
           tap(() => console.log("disconnect"))
