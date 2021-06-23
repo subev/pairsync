@@ -12,9 +12,9 @@ if (!shell.which("git")) {
   shell.echo("Sorry, this script requires git");
   shell.exit(1);
 }
-const [address] = process.argv.slice(2);
+const [address = "http://localhost:3000/"] = process.argv.slice(2);
 
-const socket$ = of(io(address ?? "http://localhost:3000/"));
+const socket$ = of(io(address));
 
 const connection$ = socket$.pipe(
   switchMap((socket) =>
