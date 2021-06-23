@@ -8,6 +8,7 @@ import {
   PairChangePayload,
   PAIR_FILE_CHANGE_EVENT,
 } from "./common";
+import * as localtunnel from "localtunnel";
 
 if (!shell.which("git")) {
   shell.echo("Sorry, this script requires git");
@@ -54,16 +55,14 @@ const onConnectAndThenLocalFileChange = io$.pipe(
 let lastChangeReceived = new Map<string, string>();
 let lastChangeSent: string;
 
-onConnectAndThenLocalFileChange.subscribe(
-  ({ filename, diff: d, server }) => {
-    const diff = d.toString();
-    if (diff !== lastChangeSent) {
-      console.log("emitting change", filename);
-      server.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
-      lastChangeSent = diff;
-    }
+onConnectAndThenLocalFileChange.subscribe(({ filename, diff: d, server }) => {
+  const diff = d.toString();
+  if (diff !== lastChangeSent) {
+    console.log("emitting change", filename);
+    server.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
+    lastChangeSent = diff;
   }
-);
+});
 
 fileChangeReceived$.subscribe(([socket, filename, diff]) => {
   console.log("received change", filename);
@@ -75,5 +74,8 @@ fileChangeReceived$.subscribe(([socket, filename, diff]) => {
 
 // start server
 
-console.log("server listening on port 3000");
-httpServer.listen(3000);
+localtunnel({ port: 3000 }).then((tunnel) => {
+  console.log("server listening on port 3000");
+  console.log(`client should connect to ${tunnel.url}`);
+  httpServer.listen(3000);
+});
