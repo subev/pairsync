@@ -81,24 +81,22 @@ let lastChangeSent: string;
 
 // initial sync
 connection$.subscribe(({ branch, sha }) => {
-  console.log(
-    `Server is streaming branch ${branch}:${sha}, checking it out'`
-  );
+  console.log(`Server is streaming branch ${branch}:${sha}, checking it out'`);
   const branchOrRevisionMissing =
-    shell.exec(`git checkout ${branch}`).code ||
-    shell.exec(`git show ${sha}`).code;
+    shell.exec(`git checkout ${branch}`, { silent: true }).code ||
+    shell.exec(`git show ${sha}`, { silent: true }).code;
   if (branchOrRevisionMissing) {
     console.log(
       `Branch '${branch}' or revision '${sha}' not found, trying to fetch...`
     );
     shell.exec("git fetch");
-    if (shell.exec(`git show ${sha}`).code) {
+    if (shell.exec(`git show ${sha}`, { silent: true }).code) {
       console.log(
         "Revision not found. Make sure the server has pushed the branched before starting the session"
       );
       process.exit(1);
     } else {
-      if (shell.exec(`git checkout ${branch}`).code) {
+      if (shell.exec(`git checkout ${branch}`, { silent: true }).code) {
         console.log(`Branch not found creating new one named ${branch}`);
         if (shell.exec(`git branch ${branch}`).code) {
           console.log(`Problem creating new branch ${branch}`);
