@@ -9,13 +9,14 @@ import {
   PAIR_FILE_CHANGE_EVENT,
 } from "./common";
 import * as yargs from "yargs";
+const silent = true;
 
 if (!shell.which("git")) {
   shell.echo("Sorry, this script requires git");
   shell.exit(1);
 }
 
-process.chdir(shell.exec("git rev-parse --show-toplevel", { silent: true }).toString().trim());
+process.chdir(shell.exec("git rev-parse --show-toplevel", { silent }).trim());
 
 const argv = yargs
   .option("force", {
@@ -81,10 +82,12 @@ let lastChangeSent: string;
 
 // initial sync
 connection$.subscribe(({ branch, sha }) => {
-  console.log(`Server is streaming branch ${branch}:${sha}`);
-  const currentSha = shell.exec("git rev-parse HEAD", { silent: true }).trim();
+  console.log(
+    `Connected to server. Server is streaming on branch ${branch}:${sha}`
+  );
+  const currentSha = shell.exec("git rev-parse HEAD", { silent }).trim();
   const currentBranch = shell
-    .exec("git rev-parse --abbrev-ref HEAD", { silent: true })
+    .exec("git rev-parse --abbrev-ref HEAD", { silent })
     .trim();
   console.log(`This client is using branch ${currentBranch}:${currentSha}`);
   if (sha === currentSha && branch === currentBranch) {
@@ -92,10 +95,10 @@ connection$.subscribe(({ branch, sha }) => {
     return;
   }
 
-  if (shell.exec(`git show ${sha}`, { silent: true }).code) {
+  if (shell.exec(`git show ${sha}`, { silent }).code) {
     console.log("Revision not found locally, tring to fetch");
-    shell.exec(`git fetch`, { silent: true });
-    if (shell.exec(`git show ${sha}`, { silent: true }).code) {
+    shell.exec(`git fetch`, { silent });
+    if (shell.exec(`git show ${sha}`, { silent }).code) {
       console.log(
         "Revision ${sha} not found even after fetching, please make sure server has pushed his work to the remote!"
       );
@@ -104,7 +107,7 @@ connection$.subscribe(({ branch, sha }) => {
   }
 
   if (branch !== currentBranch) {
-    if (shell.exec(`git checkout ${branch}`, { silent: true }).code) {
+    if (shell.exec(`git checkout ${branch}`, { silent }).code) {
       console.log(`Branch not found creating new one named ${branch}`);
       if (shell.exec(`git checkout -b ${branch}`).code) {
         console.log(`Problem creating new branch ${branch}`);
@@ -112,7 +115,7 @@ connection$.subscribe(({ branch, sha }) => {
       }
     }
   }
-  if (shell.exec(`git reset --hard ${sha}`, { silent: true }).code) {
+  if (shell.exec(`git reset --hard ${sha}`, { silent }).code) {
     console.log(`Failed checking out ${branch}:${sha}`);
   }
 
@@ -131,8 +134,8 @@ onConnectAndThenLocalFileChange$.subscribe(({ socket, filename, diff: d }) => {
 fileChangeReceived$.subscribe(([filename, diff]) => {
   console.log("received change", filename);
   lastChangeReceived = diff;
-  shell.exec(`git checkout ${filename}`, { silent: true });
+  shell.exec(`git checkout ${filename}`, { silent });
   shell.ShellString(diff).exec("git apply");
 });
 
-console.log('Waiting to connect to server...');
+console.log("Waiting to connect to server...");
