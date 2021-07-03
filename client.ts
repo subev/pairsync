@@ -122,20 +122,29 @@ connection$.subscribe(({ branch, sha }) => {
   console.log(`Successfully synced to track ${branch}:${sha}`);
 });
 
-onConnectAndThenLocalFileChange$.subscribe(({ socket, filename, diff: d }) => {
-  const diff = d.toString();
-  if (lastChangeReceived !== diff && lastChangeSent !== diff) {
-    console.log("emitting change", filename);
-    socket.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
-    lastChangeSent = diff;
+onConnectAndThenLocalFileChange$.subscribe(
+  ({ socket, filename, diff: d, isNew }) => {
+    const diff = d.toString();
+    if (lastChangeReceived !== diff && lastChangeSent !== diff) {
+      console.log("emitting change", filename);
+      socket.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, isNew });
+      lastChangeSent = diff;
+    }
   }
-});
+);
 
-fileChangeReceived$.subscribe(([filename, diff]) => {
-  console.log("received change", filename);
+fileChangeReceived$.subscribe(({ filename, diff, isNew }) => {
+  console.log(
+    isNew ? "untracked file updated" : "tracked file updated",
+    filename
+  );
   lastChangeReceived = diff;
-  shell.exec(`git checkout ${filename}`, { silent });
-  shell.ShellString(diff).exec("git apply");
+  if (isNew) {
+    shell.ShellString(diff).exec(`>> ${filename}`);
+  } else {
+    shell.exec(`git checkout ${filename}`, { silent });
+    shell.ShellString(diff).exec("git apply");
+  }
 });
 
 console.log("Waiting to connect to server...");

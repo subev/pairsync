@@ -37,10 +37,7 @@ const connection$ = io$.pipe(
 const fileChangeReceived$ = connection$.pipe(
   mergeMap(({ socket }) =>
     fromEvent(socket, PAIR_FILE_CHANGE_EVENT).pipe(
-      map(
-        ([filename, diff]: PairChangePayload) =>
-          [socket, filename, diff] as const
-      )
+      map((x: PairChangePayload) => ({ ...x, socket }))
     )
   )
 );
@@ -68,21 +65,27 @@ connection$.subscribe(({ socket }) => {
   );
 });
 
-onConnectAndThenLocalFileChange.subscribe(({ filename, diff: d, server }) => {
-  const diff = d.toString();
-  if (diff !== lastChangeSent) {
-    console.log("emitting change", filename);
-    server.emit(PAIR_FILE_CHANGE_EVENT, filename, diff);
-    lastChangeSent = diff;
+onConnectAndThenLocalFileChange.subscribe(
+  ({ filename, diff: d, server, isNew }) => {
+    const diff = d.toString();
+    if (diff !== lastChangeSent) {
+      console.log("emitting change", filename);
+      server.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, isNew });
+      lastChangeSent = diff;
+    }
   }
-});
+);
 
-fileChangeReceived$.subscribe(([socket, filename, diff]) => {
+fileChangeReceived$.subscribe(({ socket, filename, diff, isNew }) => {
   console.log("received change", filename);
   lastChangeReceived.set(socket.id, diff);
-  socket.broadcast.emit(PAIR_FILE_CHANGE_EVENT, diff);
-  shell.exec(`git checkout ${filename}`, { silent });
-  shell.ShellString(diff).exec("git apply");
+  socket.broadcast.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, isNew });
+  if (isNew) {
+    shell.ShellString(diff).exec(`>> ${filename}`);
+  } else {
+    shell.exec(`git checkout ${filename}`, { silent });
+    shell.ShellString(diff).exec("git apply");
+  }
 });
 
 // start server
