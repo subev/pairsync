@@ -6,6 +6,7 @@ import * as shell from "shelljs";
 export type PairChangePayload = [filename: string, diff: string];
 
 export const PAIR_FILE_CHANGE_EVENT = "pair-filechange";
+export const BRANCH_EVENT = "branch";
 
 export const localFileChange$ = new Observable<{
   filename: string;

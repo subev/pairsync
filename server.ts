@@ -7,6 +7,7 @@ import {
   localFileChange$,
   PairChangePayload,
   PAIR_FILE_CHANGE_EVENT,
+  BRANCH_EVENT,
 } from "./common";
 import * as localtunnel from "localtunnel";
 
@@ -14,6 +15,8 @@ if (!shell.which("git")) {
   shell.echo("Sorry, this script requires git");
   shell.exit(1);
 }
+
+process.chdir(shell.exec("git rev-parse --show-toplevel"));
 
 const httpServer = createServer();
 const io$ = of(
@@ -54,6 +57,10 @@ const onConnectAndThenLocalFileChange = io$.pipe(
 
 let lastChangeReceived = new Map<string, string>();
 let lastChangeSent: string;
+
+connection$.subscribe(({ socket }) =>
+  socket.emit(BRANCH_EVENT, shell.exec("git rev-parse --abbrev-ref HEAD"))
+);
 
 onConnectAndThenLocalFileChange.subscribe(({ filename, diff: d, server }) => {
   const diff = d.toString();
