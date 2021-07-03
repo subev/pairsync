@@ -82,14 +82,14 @@ let lastChangeSent: string;
 // initial sync
 connection$.subscribe(({ branch, sha }) => {
   console.log(
-    `Server is using branch '${branch}' revision ${sha}, checking it out'`
+    `Server is streaming branch ${branch}:${sha}, checking it out'`
   );
   const branchOrRevisionMissing =
     shell.exec(`git checkout ${branch}`).code ||
     shell.exec(`git show ${sha}`).code;
   if (branchOrRevisionMissing) {
     console.log(
-      `Branch '${branch}' or revision ${sha} not found, trying to fetch...`
+      `Branch '${branch}' or revision '${sha}' not found, trying to fetch...`
     );
     shell.exec("git fetch");
     if (shell.exec(`git show ${sha}`).code) {

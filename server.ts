@@ -59,9 +59,9 @@ let lastChangeReceived = new Map<string, string>();
 let lastChangeSent: string;
 
 connection$.subscribe(({ socket }) => {
-  const sha = shell.exec("git rev-parse HEAD");
-  const branch = shell.exec("git rev-parse --abbrev-ref HEAD");
-  console.log(`syncing client ${socket.id} to ${branch} at ${sha}`);
+  const sha = shell.exec("git rev-parse HEAD").trim();
+  const branch = shell.exec("git rev-parse --abbrev-ref HEAD").trim();
+  console.log(`client ${socket.id} is now tracking ${branch}:${sha}`);
   socket.emit(BRANCH_EVENT, branch, sha);
 });
 
