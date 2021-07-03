@@ -32,7 +32,7 @@ export const localFileChange$ = new Observable<{
     .watch(".", { ignored })
     .on("all", (event, filename) => {
       const isNotTracked = shell.exec(
-        "git ls-files --error-unmatch <file name>",
+        `git ls-files --error-unmatch ${filename}`,
         { silent }
       ).code;
 
@@ -41,6 +41,7 @@ export const localFileChange$ = new Observable<{
           subscriber.next({
             filename,
             diff: fs.readFileSync(filename).toString(),
+            isNew: true,
           });
         }
       } else {
@@ -48,7 +49,7 @@ export const localFileChange$ = new Observable<{
         if (event === "change") {
           const diff = shell.exec(`git diff ${filename}`, { silent });
 
-          subscriber.next({ filename, diff, isNew: true });
+          subscriber.next({ filename, diff });
         }
       }
     });
