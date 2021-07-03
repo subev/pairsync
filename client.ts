@@ -50,9 +50,9 @@ const connection$ = socket$.pipe(
   switchMap((socket) => fromEvent(socket, "connect").pipe(map(() => socket))),
   switchMap((socket) =>
     fromEvent(socket, BRANCH_EVENT).pipe(
-      map(([branch]) => ({ socket, branch }))
+      map(([branch, sha]) => ({ socket, branch, sha }))
     )
-  ),
+  )
 );
 
 const fileChangeReceived$ = connection$.pipe(
@@ -80,25 +80,42 @@ let lastChangeReceived: string;
 let lastChangeSent: string;
 
 // initial sync
-connection$.subscribe(
-  (({ branch }) => {
-    console.log(`server is using branch '${branch}', checking it out'`)
-    const fail = shell.exec(`git checkout ${branch}`).code;
-    if (fail) {
+connection$.subscribe(({ branch, sha }) => {
+  console.log(
+    `Server is using branch '${branch}' revision ${sha}, checking it out'`
+  );
+  const branchOrRevisionMissing =
+    shell.exec(`git checkout ${branch}`).code ||
+    shell.exec(`git show ${sha}`).code;
+  if (branchOrRevisionMissing) {
+    console.log(
+      `Branch '${branch}' or revision ${sha} not found, trying to fetch...`
+    );
+    shell.exec("git fetch");
+    if (shell.exec(`git show ${sha}`).code) {
       console.log(
-        `branch '${branch}' not found, fetching and retrying to check it out`
+        "Revision not found. Make sure the server has pushed the branched before starting the session"
       );
-      shell.exec("git fetch");
-      const fail = shell.exec(`git checkout ${branch}`).code;
-      if (fail) {
-        console.log(
-          "Branch not found. Make sure the server has pushed the branched before starting the session."
-        );
-        process.exit(1);
+      process.exit(1);
+    } else {
+      if (shell.exec(`git checkout ${branch}`).code) {
+        console.log(`Branch not found creating new one named ${branch}`);
+        if (shell.exec(`git branch ${branch}`).code) {
+          console.log(`Problem creating new branch ${branch}`);
+          process.exit(1);
+        }
       }
     }
-  })
-);
+  }
+  if (
+    shell.exec(`git checkout ${branch}`).code ||
+    shell.exec(`git reset --hard ${sha}`).code
+  ) {
+    console.log(`Failed checking out ${branch}:${sha}`);
+  }
+
+  console.log(`Successfully synced to track ${branch}:${sha}`);
+});
 
 onConnectAndThenLocalFileChange$.subscribe(({ socket, filename, diff: d }) => {
   const diff = d.toString();
