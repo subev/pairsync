@@ -15,7 +15,7 @@ if (!shell.which("git")) {
   shell.exit(1);
 }
 
-process.chdir(shell.exec("git rev-parse --show-toplevel").toString().trim());
+process.chdir(shell.exec("git rev-parse --show-toplevel", { silent: true }).toString().trim());
 
 const argv = yargs
   .option("force", {
@@ -81,34 +81,38 @@ let lastChangeSent: string;
 
 // initial sync
 connection$.subscribe(({ branch, sha }) => {
-  console.log(`Server is streaming branch ${branch}:${sha}, checking it out'`);
-  const branchOrRevisionMissing =
-    shell.exec(`git checkout ${branch}`, { silent: true }).code ||
-    shell.exec(`git show ${sha}`, { silent: true }).code;
-  if (branchOrRevisionMissing) {
-    console.log(
-      `Branch '${branch}' or revision '${sha}' not found, trying to fetch...`
-    );
-    shell.exec("git fetch");
+  console.log(`Server is streaming branch ${branch}:${sha}`);
+  const currentSha = shell.exec("git rev-parse HEAD", { silent: true }).trim();
+  const currentBranch = shell
+    .exec("git rev-parse --abbrev-ref HEAD", { silent: true })
+    .trim();
+  console.log(`This client is using branch ${currentBranch}:${currentSha}`);
+  if (sha === currentSha && branch === currentBranch) {
+    console.log("Good! No revision syncing needed!");
+    return;
+  }
+
+  if (shell.exec(`git show ${sha}`, { silent: true }).code) {
+    console.log("Revision not found locally, tring to fetch");
+    shell.exec(`git fetch`, { silent: true });
     if (shell.exec(`git show ${sha}`, { silent: true }).code) {
       console.log(
-        "Revision not found. Make sure the server has pushed the branched before starting the session"
+        "Revision ${sha} not found even after fetching, please make sure server has pushed his work to the remote!"
       );
       process.exit(1);
-    } else {
-      if (shell.exec(`git checkout ${branch}`, { silent: true }).code) {
-        console.log(`Branch not found creating new one named ${branch}`);
-        if (shell.exec(`git branch ${branch}`).code) {
-          console.log(`Problem creating new branch ${branch}`);
-          process.exit(1);
-        }
+    }
+  }
+
+  if (branch !== currentBranch) {
+    if (shell.exec(`git checkout ${branch}`, { silent: true }).code) {
+      console.log(`Branch not found creating new one named ${branch}`);
+      if (shell.exec(`git checkout -b ${branch}`).code) {
+        console.log(`Problem creating new branch ${branch}`);
+        process.exit(1);
       }
     }
   }
-  if (
-    shell.exec(`git checkout ${branch}`).code ||
-    shell.exec(`git reset --hard ${sha}`).code
-  ) {
+  if (shell.exec(`git reset --hard ${sha}`, { silent: true }).code) {
     console.log(`Failed checking out ${branch}:${sha}`);
   }
 
@@ -130,3 +134,5 @@ fileChangeReceived$.subscribe(([filename, diff]) => {
   shell.exec(`git checkout ${filename}`, { silent: true });
   shell.ShellString(diff).exec("git apply");
 });
+
+console.log('Waiting to connect to server...');
