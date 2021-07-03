@@ -10,6 +10,7 @@ import {
   BRANCH_EVENT,
 } from "./common";
 import * as localtunnel from "localtunnel";
+import { writeFileSync } from "fs";
 const silent = true;
 
 if (!shell.which("git")) {
@@ -77,11 +78,14 @@ onConnectAndThenLocalFileChange.subscribe(
 );
 
 fileChangeReceived$.subscribe(({ socket, filename, diff, isNew }) => {
-  console.log("received change", filename);
+  console.log(
+    isNew ? "received untracked file update" : "received tracked file update",
+    filename
+  );
   lastChangeReceived.set(socket.id, diff);
   socket.broadcast.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, isNew });
   if (isNew) {
-    shell.ShellString(diff).exec(`>> ${filename}`);
+    writeFileSync(filename, diff);
   } else {
     shell.exec(`git checkout ${filename}`, { silent });
     shell.ShellString(diff).exec("git apply");

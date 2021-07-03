@@ -9,6 +9,7 @@ import {
   PAIR_FILE_CHANGE_EVENT,
 } from "./common";
 import * as yargs from "yargs";
+import { writeFileSync } from "fs";
 const silent = true;
 
 if (!shell.which("git")) {
@@ -135,12 +136,12 @@ onConnectAndThenLocalFileChange$.subscribe(
 
 fileChangeReceived$.subscribe(({ filename, diff, isNew }) => {
   console.log(
-    isNew ? "untracked file updated" : "tracked file updated",
+    isNew ? "received untracked file update" : "received tracked file update",
     filename
   );
   lastChangeReceived = diff;
   if (isNew) {
-    shell.ShellString(diff).exec(`>> ${filename}`);
+    writeFileSync(filename, diff);
   } else {
     shell.exec(`git checkout ${filename}`, { silent });
     shell.ShellString(diff).exec("git apply");
