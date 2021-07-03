@@ -67,24 +67,26 @@ connection$.subscribe(({ socket }) => {
 });
 
 onConnectAndThenLocalFileChange.subscribe(
-  ({ filename, diff: d, server, isNew }) => {
+  ({ filename, diff: d, server, untracked }) => {
     const diff = d.toString();
     if (diff !== lastChangeSent) {
       console.log("emitting change", filename);
-      server.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, isNew });
+      server.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, untracked });
       lastChangeSent = diff;
     }
   }
 );
 
-fileChangeReceived$.subscribe(({ socket, filename, diff, isNew }) => {
+fileChangeReceived$.subscribe(({ socket, filename, diff, untracked }) => {
   console.log(
-    isNew ? "received untracked file update" : "received tracked file update",
+    untracked
+      ? "received untracked file update"
+      : "received tracked file update",
     filename
   );
   lastChangeReceived.set(socket.id, diff);
-  socket.broadcast.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, isNew });
-  if (isNew) {
+  socket.broadcast.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, untracked });
+  if (untracked) {
     writeFileSync(filename, diff);
   } else {
     shell.exec(`git checkout ${filename}`, { silent });

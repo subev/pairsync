@@ -6,7 +6,7 @@ import * as shell from "shelljs";
 export type PairChangePayload = {
   filename: string;
   diff: string;
-  isNew?: true;
+  untracked?: true;
 };
 const silent = true;
 
@@ -16,7 +16,7 @@ export const BRANCH_EVENT = "branch";
 export const localFileChange$ = new Observable<{
   filename: string;
   diff: string;
-  isNew?: true;
+  untracked?: true;
 }>((subscriber) => {
   const ignored = [
     ".git",
@@ -41,7 +41,7 @@ export const localFileChange$ = new Observable<{
           subscriber.next({
             filename,
             diff: fs.readFileSync(filename).toString(),
-            isNew: true,
+            untracked: true,
           });
         }
       } else {

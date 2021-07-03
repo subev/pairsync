@@ -8,6 +8,7 @@ TODO
 - [] add support for the server to commit and all clients should fast forward with
   it
 - [] NPX support
+- [] track file deletion
 
 DONE
 
