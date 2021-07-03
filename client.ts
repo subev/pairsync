@@ -15,7 +15,7 @@ if (!shell.which("git")) {
   shell.exit(1);
 }
 
-process.chdir(shell.exec("git rev-parse --show-toplevel"));
+process.chdir(shell.exec("git rev-parse --show-toplevel").toString().trim());
 
 const argv = yargs
   .option("force", {
