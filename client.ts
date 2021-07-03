@@ -25,7 +25,7 @@ const argv = yargs
   })
   .help()
   .alias("help", "h")
-  .parseSync();
+  .parseSync(process.argv.slice(2));
 
 // prepare working directory
 const workingDirectoryDirty = shell
@@ -82,6 +82,7 @@ let lastChangeSent: string;
 // initial sync
 connection$.subscribe(
   (({ branch }) => {
+    console.log(`server is using branch '${branch}', checking it out'`)
     const fail = shell.exec(`git checkout ${branch}`).code;
     if (fail) {
       console.log(
