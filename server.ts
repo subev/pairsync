@@ -49,7 +49,7 @@ const onConnectAndThenLocalFileChange = io$.pipe(
 
 // consumes
 
-let lastChangeReceived = new Map<string, string>();
+let lastChangeReceived: string;
 let lastChangeSent: string;
 
 connection$.subscribe(({ socket }) => {
@@ -69,7 +69,7 @@ connection$.subscribe(({ socket }) => {
 onConnectAndThenLocalFileChange.subscribe(
   ({ filename, diff: d, server, untracked }) => {
     const diff = d.toString();
-    if (diff !== lastChangeSent) {
+    if (diff !== lastChangeSent && diff !== lastChangeReceived) {
       console.log("emitting change", filename);
       server.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, untracked });
       lastChangeSent = diff;
@@ -84,7 +84,7 @@ fileChangeReceived$.subscribe(({ socket, filename, diff, untracked }) => {
       : "received tracked file update",
     filename
   );
-  lastChangeReceived.set(socket.id, diff);
+  lastChangeReceived = diff;
   socket.broadcast.emit(PAIR_FILE_CHANGE_EVENT, { filename, diff, untracked });
   if (untracked) {
     writeFileSync(filename, diff);
