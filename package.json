@@ -2,7 +2,7 @@
   "name": "pairsync",
   "version": "1.0.0",
   "engines": {
-    "node": ">=6.9.0"
+    "node": ">=12.0.0"
   },
   "description": "Live sync changes between two or more repositories over websockets",
   "license": "MIT",
@@ -16,7 +16,8 @@
   "main": "./webpack-output/server.js",
   "scripts": {
     "test": "echo \"Error: No tests specified\"",
-    "prepare": "webpack"
+    "build": "webpack",
+    "prepublish": "webpack"
   },
   "bin": {
     "pairsync-server": "./webpack-output/server.js",
@@ -25,11 +26,6 @@
   "keywords": [],
   "author": "Petur Subev",
   "dependencies": {
-    "@types/localtunnel": "^2.0.0",
-    "@types/node": "^15.12.4",
-    "@types/shelljs": "^0.8.8",
-    "@types/socket.io": "^3.0.2",
-    "@types/yargs": "^17.0.1",
     "chokidar": "^3.5.2",
     "localtunnel": "^2.0.1",
     "rxjs": "^7.1.0",
@@ -38,12 +34,16 @@
     "socket.io-client": "^4.1.2",
     "webpack": "^5.42.0",
     "webpack-node-externals": "^3.0.0",
-    "yargs": "^17.0.1"
-  },
-  "devDependencies": {
+    "yargs": "^17.0.1",
     "node-loader": "^2.0.0",
     "ts-loader": "^9.2.3",
     "typescript": "^4.3.4",
     "webpack-cli": "^4.7.2"
+  },
+  "devDependencies": {
+    "@types/localtunnel": "^2.0.0",
+    "@types/node": "^15.12.4",
+    "@types/shelljs": "^0.8.8",
+    "@types/yargs": "^17.0.1"
   }
 }
