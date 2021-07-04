@@ -1,15 +1,26 @@
 {
   "name": "pairsync",
   "version": "1.0.0",
-  "description": "",
+  "description": "Live sync changes between two or more repositories over websockets",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/subev/pairsync.git"
+  },
+  "contributors": [
+    "Petur Subev"
+  ],
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: No tests specified\"",
-    "build": "rollup -c"
+    "prepare": "rollup -c"
+  },
+  "bin": {
+    "server": "./output/server.js",
+    "client": "./output/client.js"
   },
   "keywords": [],
-  "author": "",
-  "license": "ISC",
+  "author": "Petur Subev",
   "dependencies": {
     "@types/localtunnel": "^2.0.0",
     "@types/node": "^15.12.4",
@@ -23,10 +34,10 @@
     "shelljs": "^0.8.4",
     "socket.io": "^4.1.2",
     "socket.io-client": "^4.1.2",
-    "typescript": "^4.3.4",
     "yargs": "^17.0.1"
   },
   "devDependencies": {
+    "typescript": "^4.3.4",
     "@rollup/plugin-typescript": "^8.2.1"
   }
 }
