@@ -27,6 +27,14 @@ const argv = yargs
   })
   .help()
   .alias("help", "h")
+  .usage("$0 <url> [-f]", "Connects to a running server", (yargs) =>
+    yargs.positional("url", {
+      describe:
+        `The address the server logged when started. Should look like 'some-random-string.loca.lt'.
+        If not provided will attach to localhost:3000 which is used locally by the server`,
+      type: "string",
+    })
+  )
   .parseSync(process.argv.slice(2));
 
 // prepare working directory
@@ -136,7 +144,9 @@ onConnectAndThenLocalFileChange$.subscribe(
 
 fileChangeReceived$.subscribe(({ filename, diff, untracked }) => {
   console.log(
-    untracked ? "received untracked file update" : "received tracked file update",
+    untracked
+      ? "received untracked file update"
+      : "received tracked file update",
     filename
   );
   lastChangeReceived = diff;
