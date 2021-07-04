@@ -1,6 +1,6 @@
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import { of, fromEvent } from "rxjs";
+import { of, fromEvent, concat, merge } from "rxjs";
 import { map, mergeMap, switchMap } from "rxjs/operators";
 import * as shell from "shelljs";
 import {
@@ -8,6 +8,7 @@ import {
   PairChangePayload,
   PAIR_FILE_CHANGE_EVENT,
   BRANCH_EVENT,
+  initialServerChangesStream,
 } from "./common";
 import * as localtunnel from "localtunnel";
 import { writeFileSync } from "fs";
@@ -43,8 +44,12 @@ const fileChangeReceived$ = connection$.pipe(
   )
 );
 
-const onConnectAndThenLocalFileChange = io$.pipe(
-  switchMap((server) => localFileChange$.pipe(map((x) => ({ server, ...x }))))
+const onConnectAndThenLocalFileChange$ = io$.pipe(
+  switchMap((server) =>
+    merge(initialServerChangesStream(), localFileChange$).pipe(
+      map((x) => ({ server, ...x }))
+    )
+  )
 );
 
 // consumes
@@ -66,7 +71,7 @@ connection$.subscribe(({ socket }) => {
   );
 });
 
-onConnectAndThenLocalFileChange.subscribe(
+concat(onConnectAndThenLocalFileChange$).subscribe(
   ({ filename, diff: d, server, untracked }) => {
     const diff = d.toString();
     if (diff !== lastChangeSent && diff !== lastChangeReceived) {
