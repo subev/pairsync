@@ -10,14 +10,14 @@
   "contributors": [
     "Petur Subev"
   ],
-  "main": "index.js",
+  "main": "./webpack-output/server.js",
   "scripts": {
     "test": "echo \"Error: No tests specified\"",
-    "webpack-build": "webpack"
+    "prepare": "webpack"
   },
   "bin": {
-    "server": "./output/server.js",
-    "client": "./output/client.js"
+    "pairsync-server": "./webpack-output/server.js",
+    "pairsync-client": "./webpack-output/client.js"
   },
   "keywords": [],
   "author": "Petur Subev",

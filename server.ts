@@ -106,6 +106,6 @@ fileChangeReceived$.subscribe(({ socket, filename, diff, untracked }) => {
 
 localtunnel({ port: 3000 }).then((tunnel) => {
   console.log("server listening on port 3000");
-  console.log(`client should connect to ${tunnel.url}`);
+  console.log(`clients should connect to ${tunnel.url}`);
   httpServer.listen(3000);
 });
