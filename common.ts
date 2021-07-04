@@ -66,6 +66,7 @@ export const initialServerChangesStream = () =>
       shell
         .exec("git ls-files --others --exclude-standard", { silent })
         .split("\n")
+        .filter(Boolean)
     ).pipe(
       map<string, PairChangePayload>((filename) => ({
         filename,
@@ -74,7 +75,12 @@ export const initialServerChangesStream = () =>
       }))
     ),
     // unstaged
-    from(shell.exec("git diff HEAD --name-only", { silent }).split("\n")).pipe(
+    from(
+      shell
+        .exec("git diff HEAD --name-only", { silent })
+        .split("\n")
+        .filter(Boolean)
+    ).pipe(
       map<string, PairChangePayload>((filename) => ({
         filename,
         diff: shell.exec(`git diff HEAD -- ${filename}`, { silent }),

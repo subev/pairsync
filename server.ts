@@ -1,7 +1,7 @@
 import { createServer } from "http";
 import { Server, Socket } from "socket.io";
-import { of, fromEvent, concat, merge } from "rxjs";
-import { map, mergeMap, switchMap } from "rxjs/operators";
+import { of, fromEvent, concat } from "rxjs";
+import { map, mergeMap, switchMap, tap } from "rxjs/operators";
 import * as shell from "shelljs";
 import {
   localFileChange$,
@@ -44,11 +44,14 @@ const fileChangeReceived$ = connection$.pipe(
   )
 );
 
-const onConnectAndThenLocalFileChange$ = io$.pipe(
-  switchMap((server) =>
-    merge(initialServerChangesStream(), localFileChange$).pipe(
-      map((x) => ({ server, ...x }))
-    )
+const onConnectAndThenSyncThenLocalFileChange$ = connection$.pipe(
+  switchMap(({ server }) =>
+    concat(
+      initialServerChangesStream().pipe(
+        tap(({ filename }) => console.log(filename))
+      ),
+      localFileChange$
+    ).pipe(map((x) => ({ server, ...x })))
   )
 );
 
@@ -71,7 +74,7 @@ connection$.subscribe(({ socket }) => {
   );
 });
 
-concat(onConnectAndThenLocalFileChange$).subscribe(
+concat(onConnectAndThenSyncThenLocalFileChange$).subscribe(
   ({ filename, diff: d, server, untracked }) => {
     const diff = d.toString();
     if (diff !== lastChangeSent && diff !== lastChangeReceived) {
