@@ -1,6 +1,9 @@
 {
   "name": "pairsync",
   "version": "1.0.0",
+  "engines": {
+    "node": ">=6.9.0"
+  },
   "description": "Live sync changes between two or more repositories over websockets",
   "license": "MIT",
   "repository": {
