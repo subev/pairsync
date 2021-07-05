@@ -17,6 +17,7 @@ DONE
 
 TODO
 
+- [] NPM i -g not working on Windows
 - [] track file deletion or validate that it is working
 - [] add commit support?
 
