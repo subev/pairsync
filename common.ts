@@ -16,6 +16,8 @@ const silent = true;
 export const PAIR_FILE_CHANGE_EVENT = "pair-filechange";
 export const BRANCH_EVENT = "branch";
 const newLineRegex = /\r?\n/;
+const trimTrailingSlash = (x: string) => x.replace(/\/$/, "");
+const trimleadingSlash = (x: string) => x.replace(/^\//, "");
 
 export const localFileChange$ = new Observable<PairChangePayload>(
   (subscriber) => {
@@ -26,11 +28,13 @@ export const localFileChange$ = new Observable<PairChangePayload>(
             .readFileSync(".gitignore")
             .toString()
             .split(newLineRegex)
-            .filter((x) => x)
+            .filter((x) => x && !x.startsWith("#"))
+            .map(trimTrailingSlash)
+            .map(trimleadingSlash)
         : []),
     ];
     const watcher = chokidar
-      .watch(".", { ignored })
+      .watch(".", { ignored, ignoreInitial: true })
       .on("all", (event, filename) => {
         const isNotTracked = shell.exec(
           `git ls-files --error-unmatch ${filename}`,
