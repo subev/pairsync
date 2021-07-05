@@ -29,8 +29,7 @@ const argv = yargs
   .alias("help", "h")
   .usage("$0 <url> [-f]", "Connects to a running server", (yargs) =>
     yargs.positional("url", {
-      describe:
-        `The address the server logged when started. Should look like 'some-random-string.loca.lt'.
+      describe: `The address the server logged when started. Should look like 'some-random-string.loca.lt'.
         If not provided will attach to localhost:3000 which is used locally by the server`,
       type: "string",
     })
@@ -52,9 +51,9 @@ if (workingDirectoryDirty) {
   }
 }
 
-const [address = "http://localhost:3000/"] = argv._;
+const { url = "http://localhost:3000/" } = argv;
 
-const socket$ = of(io(address as string));
+const socket$ = of(io(url));
 
 const connection$ = socket$.pipe(
   switchMap((socket) => fromEvent(socket, "connect").pipe(map(() => socket))),
@@ -158,4 +157,4 @@ fileChangeReceived$.subscribe(({ filename, diff, untracked }) => {
   }
 });
 
-console.log("Waiting to connect to server...");
+console.log(`Trying to connect to server ${url}`);
