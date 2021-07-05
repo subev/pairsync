@@ -15,6 +15,7 @@ const silent = true;
 
 export const PAIR_FILE_CHANGE_EVENT = "pair-filechange";
 export const BRANCH_EVENT = "branch";
+const newLineRegex = /\r?\n/;
 
 export const localFileChange$ = new Observable<PairChangePayload>(
   (subscriber) => {
@@ -24,7 +25,7 @@ export const localFileChange$ = new Observable<PairChangePayload>(
         ? fs
             .readFileSync(".gitignore")
             .toString()
-            .split("\n")
+            .split(newLineRegex)
             .filter((x) => x)
         : []),
     ];
@@ -65,7 +66,7 @@ export const initialServerChangesStream = () =>
     from(
       shell
         .exec("git ls-files --others --exclude-standard", { silent })
-        .split("\n")
+        .split(newLineRegex)
         .filter(Boolean)
     ).pipe(
       map<string, PairChangePayload>((filename) => ({
@@ -78,7 +79,7 @@ export const initialServerChangesStream = () =>
     from(
       shell
         .exec("git diff HEAD --name-only", { silent })
-        .split("\n")
+        .split(newLineRegex)
         .filter(Boolean)
     ).pipe(
       map<string, PairChangePayload>((filename) => ({
