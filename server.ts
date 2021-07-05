@@ -19,7 +19,13 @@ if (!shell.which("git")) {
   shell.exit(1);
 }
 
-process.chdir(shell.exec("git rev-parse --show-toplevel", { silent }).trim());
+const repoPath = shell.exec("git rev-parse --show-toplevel", { silent });
+if (repoPath.code) {
+  shell.echo("Run this inside a git repo!");
+  shell.exit(1);
+}
+
+process.chdir(repoPath.trim());
 
 const httpServer = createServer();
 const io$ = of(

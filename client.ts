@@ -17,7 +17,13 @@ if (!shell.which("git")) {
   shell.exit(1);
 }
 
-process.chdir(shell.exec("git rev-parse --show-toplevel", { silent }).trim());
+const repoPath = shell.exec("git rev-parse --show-toplevel", { silent });
+if (repoPath.code) {
+  shell.echo("Run this inside a git repo!");
+  shell.exit(1);
+}
+
+process.chdir(repoPath.trim());
 
 const argv = yargs
   .option("force", {
@@ -27,13 +33,13 @@ const argv = yargs
   })
   .help()
   .alias("help", "h")
-  .usage("$0 <url> [-f]", "Connects to a running server", (yargs) =>
-    yargs.positional("url", {
-      describe: `The address the server logged when started. Should look like 'some-random-string.loca.lt'.
-        If not provided will attach to localhost:3000 which is used locally by the server`,
-      type: "string",
-    })
-  )
+  .positional("url", {
+    default: "http://localhost:3000/",
+    demandOption: false,
+    describe: `The address the server logged when started. Should look like 'some-random-string.loca.lt'.
+        If not provided will attach to localhost:3000 scenario where server/client is the same machine`,
+    type: "string",
+  })
   .parseSync(process.argv.slice(2));
 
 // prepare working directory
@@ -51,7 +57,7 @@ if (workingDirectoryDirty) {
   }
 }
 
-const { url = "http://localhost:3000/" } = argv;
+const { url } = argv;
 
 const socket$ = of(io(url));
 
