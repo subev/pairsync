@@ -2,7 +2,7 @@
 
 Sync files automatically between two or more git repositories.
 One acts as the server and multiple clients can connect.
-If a file is modified on any machine the changes are broadcasted to the others.
+If a file is modified on any of the machines the changes are broadcasted to the others.
 
 # Installation
 
@@ -16,6 +16,9 @@ You will get an address to share with the other(s)
 
 On the other machine(s):
 `pairsync-client https://random-animal-42.loca.lt`
+
+Short video demo sync between two repositories:
+[![Youtube preview](https://img.youtube.com/vi/9uvHl_-tz88/0.jpg)](https://www.youtube.com/watch?v=9uvHl_-tz88)
 
 ## Notes
 
