@@ -26,6 +26,7 @@ if (repoPath.code) {
 }
 
 process.chdir(repoPath.trim());
+console.log("Listening inside directory: " + process.cwd());
 
 const httpServer = createServer();
 const io$ = of(
